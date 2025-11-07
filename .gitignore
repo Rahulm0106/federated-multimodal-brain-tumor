@@ -208,5 +208,7 @@ __marimo__/
 
 #Data
 data/
+!src/data/
+!src/data/*
 
 .DS_Store
