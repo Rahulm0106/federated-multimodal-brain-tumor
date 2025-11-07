@@ -212,3 +212,5 @@ data/
 !src/data/*
 
 .DS_Store
+/.idea
+/src/data/data
