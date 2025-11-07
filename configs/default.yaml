@@ -1,0 +1,4 @@
+model:
+  feature_dim: 512
+fl:
+  rounds: 50
