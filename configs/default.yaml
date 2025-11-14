@@ -1,4 +1,20 @@
 model:
-  feature_dim: 512
+  backbone: mobilenet_v3_small
+  feature_dim: 576
+  pretrained: true
+  freeze_body: false
+
 fl:
   rounds: 50
+  num_clients: 4
+  fraction_fit: 1.0
+  local_epochs: 3
+  batch_size: 32
+
+client:
+  local_classifier: random_forest
+  rf_n_estimators: 100
+  rf_max_depth: null
+
+data:
+  modality_per_client: true
