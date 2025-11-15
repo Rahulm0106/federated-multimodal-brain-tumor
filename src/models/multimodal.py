@@ -1,4 +1,3 @@
-# src/models/multimodal.py
 import torch.nn as nn
 from .backbone import MobileNetV3Backbone
 from .local_heads import RandomForestHead

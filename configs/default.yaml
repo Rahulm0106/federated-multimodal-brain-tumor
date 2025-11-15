@@ -9,7 +9,7 @@ fl:
   num_clients: 4
   fraction_fit: 1.0
   local_epochs: 3
-  batch_size: 32
+  batch_size: 16
 
 client:
   local_classifier: random_forest

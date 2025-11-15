@@ -1,4 +1,3 @@
-# src/models/local_heads.py
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 import torch

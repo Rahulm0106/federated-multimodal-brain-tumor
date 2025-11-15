@@ -19,9 +19,9 @@ LABELS = ["Healthy", "Tumor"]
 def get_root_directory(modality: str) -> str:
     """Get root directory based on modality."""
     if modality == "ct":
-        return "data/raw/Dataset/Brain Tumor CT scan Images"
+        return "../../data/raw/Dataset/Brain Tumor CT scan Images"
     elif modality == "mri":
-        return "data/raw/Dataset/Brain Tumor MRI images"
+        return "../../data/raw/Dataset/Brain Tumor MRI images"
     raise ValueError("Invalid modality. Choose 'ct' or 'mri'.")
 
 
