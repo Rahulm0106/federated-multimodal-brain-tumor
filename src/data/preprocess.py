@@ -17,11 +17,13 @@ LABELS = ["Healthy", "Tumor"]
 
 
 def get_root_directory(modality: str) -> str:
-    """Get root directory based on modality."""
+    """Get root directory based on modality (resolved from project root)."""
+    # Resolve path relative to repository root (src/data -> src -> repo)
+    repo_root = Path(__file__).resolve().parents[2]
     if modality == "ct":
-        return "../../data/raw/Dataset/Brain Tumor CT scan Images"
+        return str(repo_root / "data" / "raw" / "Dataset" / "Brain Tumor CT scan Images")
     elif modality == "mri":
-        return "../../data/raw/Dataset/Brain Tumor MRI images"
+        return str(repo_root / "data" / "raw" / "Dataset" / "Brain Tumor MRI images")
     raise ValueError("Invalid modality. Choose 'ct' or 'mri'.")
 
 
@@ -77,18 +79,26 @@ class BrainScanDataset(Dataset):
 
 
 def create_dataloaders(modality: str):
-    """Create train/val dataloaders for the given modality."""
+    """Create train/val/test dataloaders for the given modality.
+
+    Splits the dataset into approx 70% train, 15% val, 15% test.
+    """
     df = collect_filepaths_and_labels(get_root_directory(modality))
-    df_train, df_val = train_test_split(df, test_size=0.2, random_state=42, stratify=df["label"])
+    # First split off test+val (30%), keep train (70%)
+    df_train, df_holdout = train_test_split(df, test_size=0.3, random_state=42, stratify=df["label"])
+    # Split holdout into val and test (each ~15% of original)
+    df_val, df_test = train_test_split(df_holdout, test_size=0.5, random_state=42, stratify=df_holdout["label"])
 
     train_ds = BrainScanDataset(df_train, get_transforms(train=True))
     val_ds = BrainScanDataset(df_val, get_transforms(train=False))
+    test_ds = BrainScanDataset(df_test, get_transforms(train=False))
 
     train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
     val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
+    test_loader = DataLoader(test_ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
 
-    print(f"Created {len(train_ds)} train and {len(val_ds)} val samples for {modality.upper()}.")
-    return train_loader, val_loader
+    print(f"Created {len(train_ds)} train, {len(val_ds)} val and {len(test_ds)} test samples for {modality.upper()}.")
+    return train_loader, val_loader, test_loader
 
 
 if __name__ == "__main__":

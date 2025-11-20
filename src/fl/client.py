@@ -25,7 +25,7 @@ class FLClient(fl.client.NumPyClient):
         else:
             self.device = torch.device("cpu")
 
-        self.train_loader, self.val_loader = create_dataloaders(modality)
+        self.train_loader, self.val_loader, self.test_loader = create_dataloaders(modality)
 
         self.model = get_model(config).to(self.device)
         self.criterion = nn.CrossEntropyLoss()
@@ -87,20 +87,37 @@ class FLClient(fl.client.NumPyClient):
     def evaluate(self, parameters, config):
         self.set_parameters(parameters)
         self.model.eval()
-
-        features_list, labels_list = [], []
+        # Evaluate on validation set
+        val_features_list, val_labels_list = [], []
         with torch.no_grad():
             for images, labels in self.val_loader:
                 images = images.repeat(1, 3, 1, 1)  # Grayscale to RGB
                 images = images.to(self.device)
                 feats = self.model.get_features(images)
-                features_list.append(feats.cpu())
-                labels_list.append(labels)
+                val_features_list.append(feats.cpu())
+                val_labels_list.append(labels)
 
-        features = torch.cat(features_list)
-        labels = torch.cat(labels_list)
-        preds = self.local_head.predict_class(features)
-        acc = accuracy_score(labels.numpy(), preds)
+        val_features = torch.cat(val_features_list)
+        val_labels = torch.cat(val_labels_list)
+        val_preds = self.local_head.predict_class(val_features)
+        val_acc = accuracy_score(val_labels.numpy(), val_preds)
 
-        print(f"Client {self.client_id} ({self.modality}) | Val Acc: {acc:.4f}")
-        return 0.0, len(labels), {"accuracy": float(acc)}
+        # Evaluate on test set
+        test_features_list, test_labels_list = [], []
+        with torch.no_grad():
+            for images, labels in self.test_loader:
+                images = images.repeat(1, 3, 1, 1)
+                images = images.to(self.device)
+                feats = self.model.get_features(images)
+                test_features_list.append(feats.cpu())
+                test_labels_list.append(labels)
+
+        test_features = torch.cat(test_features_list)
+        test_labels = torch.cat(test_labels_list)
+        test_preds = self.local_head.predict_class(test_features)
+        test_acc = accuracy_score(test_labels.numpy(), test_preds)
+
+        print(f"Client {self.client_id} ({self.modality}) | Val Acc: {val_acc:.4f} | Test Acc: {test_acc:.4f}")
+        # Return both metrics so server can aggregate them
+        metrics = {"val_accuracy": float(val_acc), "test_accuracy": float(test_acc)}
+        return 0.0, len(val_labels), metrics

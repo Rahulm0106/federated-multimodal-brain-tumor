@@ -10,6 +10,11 @@ fl:
   fraction_fit: 1.0
   local_epochs: 3
   batch_size: 16
+  # Directory where learning-curve outputs will be saved. Can be relative to repo root
+  # or an absolute path. The server will create this directory if it does not exist.
+  learning_curve_dir: outputs/learning_curves
+  # Which formats to save: any combination of 'json', 'csv', 'png'
+  learning_curve_formats: [json, csv, png]
 
 client:
   local_classifier: random_forest
