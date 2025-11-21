@@ -5,7 +5,7 @@ model:
   freeze_body: false
 
 fl:
-  rounds: 50
+  rounds: 20
   num_clients: 4
   fraction_fit: 1.0
   local_epochs: 3

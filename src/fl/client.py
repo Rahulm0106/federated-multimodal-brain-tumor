@@ -117,7 +117,26 @@ class FLClient(fl.client.NumPyClient):
         test_preds = self.local_head.predict_class(test_features)
         test_acc = accuracy_score(test_labels.numpy(), test_preds)
 
-        print(f"Client {self.client_id} ({self.modality}) | Val Acc: {val_acc:.4f} | Test Acc: {test_acc:.4f}")
-        # Return both metrics so server can aggregate them
-        metrics = {"val_accuracy": float(val_acc), "test_accuracy": float(test_acc)}
+        # Evaluate on training set as well (report training accuracy)
+        train_features_list, train_labels_list = [], []
+        with torch.no_grad():
+            for images, labels in self.train_loader:
+                images = images.repeat(1, 3, 1, 1)
+                images = images.to(self.device)
+                feats = self.model.get_features(images)
+                train_features_list.append(feats.cpu())
+                train_labels_list.append(labels)
+
+        train_features = torch.cat(train_features_list)
+        train_labels = torch.cat(train_labels_list)
+        train_preds = self.local_head.predict_class(train_features)
+        train_acc = accuracy_score(train_labels.numpy(), train_preds)
+
+        print(f"Client {self.client_id} ({self.modality}) | Train Acc: {train_acc:.4f} | Val Acc: {val_acc:.4f} | Test Acc: {test_acc:.4f}")
+        # Return metrics including train accuracy so server can aggregate them
+        metrics = {
+            "train_accuracy": float(train_acc),
+            "val_accuracy": float(val_acc),
+            "test_accuracy": float(test_acc),
+        }
         return 0.0, len(val_labels), metrics
